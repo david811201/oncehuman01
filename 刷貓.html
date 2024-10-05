@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>七日世界刷貓貓時間紀錄</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+    .container {
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 10px;
+      border: 1px solid #ddd;
+    }
+    .row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .btn {
+      padding: 8px 12px;
+      background-color: #007BFF;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    .btn:hover {
+      background-color: #0056b3;
+    }
+    .time {
+      width: 150px;
+      text-align: center;
+    }
+    .checkbox {
+      margin-left: 10px;
+    }
+    .location {
+      font-size: 1.2em;
+      margin-bottom: 20px;
+    }
+    footer {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 14px;
+      color: #555;
+    }
+    .summary {
+      margin-top: 20px;
+    }
+    .current-round {
+      font-size: 1.2em;
+      margin-bottom: 10px;
+    }
+    .total {
+      margin-top: 20px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- 地點選擇 -->
+    <div class="location">
+      地點: 
+      <select id="locationSelect">
+        <option value="黑原鎮">黑原鎮</option>
+        <option value="深草旅店">深草旅店</option>
+        <option value="穢水營地">穢水營地</option>
+        <option value="旅人營地">旅人營地</option>
+        <option value="麥爾市集">麥爾市集</option>
+      </select>
+    </div>
+
+    <h2>七日世界刷貓貓時間紀錄</h2>
+
+    <div id="streams"></div>
+
+    <!-- 目前輪數 -->
+    <div class="current-round">目前輪數: <span id="currentRound">1</span></div>
+
+    <!-- 統計區 -->
+    <div class="summary">
+      <h3>統計結果</h3>
+      <div>第一輪統計 | 月亮貓數量: <span id="moonCatCount1">0</span> | 橘貓數量: <span id="orangeCatCount1">0</span> | 黑白貓數量: <span id="blackWhiteCatCount1">0</span> | 普貓數量: <span id="commonCatCount1">0</span></div>
+      <div>第二輪統計 | 月亮貓數量: <span id="moonCatCount2">0</span> | 橘貓數量: <span id="orangeCatCount2">0</span> | 黑白貓數量: <span id="blackWhiteCatCount2">0</span> | 普貓數量: <span id="commonCatCount2">0</span></div>
+      <div>第三輪統計 | 月亮貓數量: <span id="moonCatCount3">0</span> | 橘貓數量: <span id="orangeCatCount3">0</span> | 黑白貓數量: <span id="blackWhiteCatCount3">0</span> | 普貓數量: <span id="commonCatCount3">0</span></div>
+      <div>第四輪統計 | 月亮貓數量: <span id="moonCatCount4">0</span> | 橘貓數量: <span id="orangeCatCount4">0</span> | 黑白貓數量: <span id="blackWhiteCatCount4">0</span> | 普貓數量: <span id="commonCatCount4">0</span></div>
+      <div>第五輪統計 | 月亮貓數量: <span id="moonCatCount5">0</span> | 橘貓數量: <span id="orangeCatCount5">0</span> | 黑白貓數量: <span id="blackWhiteCatCount5">0</span> | 普貓數量: <span id="commonCatCount5">0</span></div>
+    </div>
+
+    <!-- 總計結果 -->
+    <div class="total">
+      <h3>總計結果</h3>
+      月亮貓總數量: <span id="totalMoonCat">0</span> | 橘貓總數量: <span id="totalOrangeCat">0</span> | 黑白貓總數量: <span id="totalBlackWhiteCat">0</span> | 普貓總數量: <span id="totalCommonCat">0</span>
+    </div>
+
+    <!-- 下一輪按鈕 -->
+    <button class="btn" id="nextRoundBtn">下一輪</button>
+
+    <footer>
+      作者: 巴哈姆特 Doggie
+    </footer>
+  </div>
+
+  <script>
+    const numStreams = 10; // 分流數量
+    const refreshInterval = 20 * 60 * 1000; // 20分鐘提醒時間 (毫秒)
+    let currentRound = 1; // 當前輪次
+
+    const streamsContainer = document.getElementById('streams');
+    const moonCatCountElements = [
+      document.getElementById('moonCatCount1'),
+      document.getElementById('moonCatCount2'),
+      document.getElementById('moonCatCount3'),
+      document.getElementById('moonCatCount4'),
+      document.getElementById('moonCatCount5'),
+    ];
+    const orangeCatCountElements = [
+      document.getElementById('orangeCatCount1'),
+      document.getElementById('orangeCatCount2'),
+      document.getElementById('orangeCatCount3'),
+      document.getElementById('orangeCatCount4'),
+      document.getElementById('orangeCatCount5'),
+    ];
+    const blackWhiteCatCountElements = [
+      document.getElementById('blackWhiteCatCount1'),
+      document.getElementById('blackWhiteCatCount2'),
+      document.getElementById('blackWhiteCatCount3'),
+      document.getElementById('blackWhiteCatCount4'),
+      document.getElementById('blackWhiteCatCount5'),
+    ];
+    const commonCatCountElements = [
+      document.getElementById('commonCatCount1'),
+      document.getElementById('commonCatCount2'),
+      document.getElementById('commonCatCount3'),
+      document.getElementById('commonCatCount4'),
+      document.getElementById('commonCatCount5'),
+    ];
+
+    const totalMoonCat = document.getElementById('totalMoonCat');
+    const totalOrangeCat = document.getElementById('totalOrangeCat');
+    const totalBlackWhiteCat = document.getElementById('totalBlackWhiteCat');
+    const totalCommonCat = document.getElementById('totalCommonCat');
+
+    // 創建每個分流的行
+    for (let i = 1; i <= numStreams; i++) {
+      const row = document.createElement('div');
+      row.classList.add('row');
+
+      // 顯示分流編號
+      const streamName = document.createElement('span');
+      streamName.innerText = `分流 ${i}`;
+      row.appendChild(streamName);
+
+      // 顯示當下時間
+      const currentTimeDisplay = document.createElement('span');
+      currentTimeDisplay.classList.add('time');
+      currentTimeDisplay.innerText = '--:--:--';
+      row.appendChild(currentTimeDisplay);
+
+      // 紀錄按鈕
+      const recordBtn = document.createElement('button');
+      recordBtn.classList.add('btn');
+      recordBtn.innerText = '紀錄';
+      recordBtn.onclick = () => {
+        const currentTime = new Date();
+        const currentTimeStr = currentTime.toLocaleTimeString();
+        currentTimeDisplay.innerText = currentTimeStr;
+
+        // 計算下次捕捉時間
+        const nextCaptureTime = new Date(currentTime.getTime() + refreshInterval);
+        const nextCaptureTimeStr = nextCaptureTime.toLocaleTimeString();
+
+        // 更新 "下次捕捉時間" 顯示
+        nextCaptureDisplay.innerText = nextCaptureTimeStr;
+      };
+      row.appendChild(recordBtn);
+
+      // 顯示下次捕捉時間
+      const nextCaptureDisplay = document.createElement('span');
+      nextCaptureDisplay.classList.add('time');
+      nextCaptureDisplay.innerText = '--:--:--';
+      row.appendChild(nextCaptureDisplay);
+
+      // 顯示異常物：月亮貓、橘貓、黑白貓、普貓
+      const moonCatCheckbox = createCatCheckbox("月亮貓", moonCatCountElements, i);
+      const orangeCatCheckbox = createCatCheckbox("橘貓", orangeCatCountElements, i);
+      const blackWhiteCatCheckbox = createCatCheckbox("黑白貓", blackWhiteCatCountElements, i);
+      const commonCatCheckbox = createCatCheckbox("普貓", commonCatCountElements, i);
+
+      row.appendChild(moonCatCheckbox);
+      row.appendChild(orangeCatCheckbox);
+      row.appendChild(blackWhiteCatCheckbox);
+      row.appendChild(commonCatCheckbox);
+
+      streamsContainer.appendChild(row);
+    }
+
+    // 創建打勾選項（異常物），並防止多選
+    function createCatCheckbox(labelText, countElements, streamIndex) {
+      const container = document.createElement('span');
+      const label = document.createElement('label');
+      label.innerText = labelText;
+      container.appendChild(label);
+
+      const checkbox = document.createElement('input');
+      checkbox.type = 'radio'; // 改為 radio 防止多選
+      checkbox.name = `anomalyCat${streamIndex}`; // 保證每個分流只能選一個
+      checkbox.classList.add('checkbox');
+      checkbox.onchange = () => {
+        if (checkbox.checked) {
+          // 根據當前輪次增加貓數量
+          const count = parseInt(countElements[currentRound - 1].innerText) + 1;
+          countElements[currentRound - 1].innerText = count;
+
+          // 更新總計結果
+          updateTotalCount();
+        }
+      };
+      container.appendChild(checkbox);
+      return container;
+    }
+
+    // 更新總計結果
+    function updateTotalCount() {
+      const totalMoon = calculateTotal(moonCatCountElements);
+      const totalOrange = calculateTotal(orangeCatCountElements);
+      const totalBlackWhite = calculateTotal(blackWhiteCatCountElements);
+      const totalCommon = calculateTotal(commonCatCountElements);
+
+      totalMoonCat.innerText = totalMoon;
+      totalOrangeCat.innerText = totalOrange;
+      totalBlackWhiteCat.innerText = totalBlackWhite;
+      totalCommonCat.innerText = totalCommon;
+    }
+
+    // 計算總數
+    function calculateTotal(countElements) {
+      return countElements.reduce((total, elem) => total + parseInt(elem.innerText), 0);
+    }
+
+    // 切換到下一輪並清空數據
+    document.getElementById('nextRoundBtn').onclick = () => {
+      if (currentRound < 5) {
+        currentRound++;
+
+        // 更新目前輪數顯示
+        document.getElementById('currentRound').innerText = currentRound;
+
+        // 清空當下時間和20分鐘後的時間
+        document.querySelectorAll('.time').forEach((timeDisplay) => {
+          timeDisplay.innerText = '--:--:--';
+        });
+
+        // 重置所有選中的異常物
+        document.querySelectorAll('input[type=radio]').forEach((radio) => {
+          radio.checked = false;
+        });
+      }
+    };
+  </script>
+</body>
+</html>
